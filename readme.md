@@ -58,10 +58,10 @@ streamlit run app.py
 1. Register at [replicate.com](https://replicate.com)
 2. Go to [Account Settings](https://replicate.com/account)
 3. Get your API token
-4. Add this line to your `app.py`:
+4. Add this line to your `.env`:
 
 ```python
-os.environ["REPLICATE_API_TOKEN"] = "your_token_here"
+REPLICATE_API_TOKEN = your_token_here
 ```
 
 ---
