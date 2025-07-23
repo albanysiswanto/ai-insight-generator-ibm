@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import replicate
 import os
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 # ========== CONFIG ==========
 st.set_page_config(page_title="AI Insight Generator", layout="wide")
 st.title("📊 AI Insight Generator for Excel Data")
-
-# ========== REPLICATE API ==========
-os.environ["REPLICATE_API_TOKEN"] = "r8_CCq811jmqTbUjvfwVqS9qEEYRLnjFnW16QeTU"
 
 def generate_insight_with_granite(prompt):
     try:
