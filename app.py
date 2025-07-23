@@ -6,17 +6,19 @@ import replicate
 import os
 from dotenv import load_dotenv
 
-
+# ========== LOAD ENV ==========
 load_dotenv()
-os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+replicate_client = replicate.Client(api_token=REPLICATE_API_TOKEN)
 
 # ========== CONFIG ==========
 st.set_page_config(page_title="AI Insight Generator", layout="wide")
 st.title("📊 AI Insight Generator for Excel Data")
 
+# ========== FUNGSI UTAMA ==========
 def generate_insight_with_granite(prompt):
     try:
-        output = replicate.run(
+        output = replicate_client.run(
             "ibm-granite/granite-3.3-8b-instruct",
             input={"prompt": prompt, "max_new_tokens": 300, "temperature": 0.7}
         )
@@ -24,7 +26,7 @@ def generate_insight_with_granite(prompt):
     except Exception as e:
         return f"❌ Error saat memanggil Granite: {e}"
 
-# ========== FILE UPLOAD ==========
+# ========== UPLOAD FILE ==========
 uploaded_file = st.file_uploader("Upload Excel file (.xlsx) dengan kolom 'tanggal' dan 'penjualan'", type=["xlsx"])
 
 if uploaded_file:
@@ -49,7 +51,7 @@ if uploaded_file:
             ax.set_title("Tren Penjualan")
             st.pyplot(fig)
 
-            # ========== INSIGHT NUMERIK ==========
+            # ========== INSIGHT ANGKA ==========
             st.subheader("📊 Insight Angka Otomatis")
 
             perubahan = df["penjualan"].pct_change().fillna(0)
@@ -69,11 +71,11 @@ if uploaded_file:
                 st.markdown("🚨 **Detail Anomali Terdeteksi:**")
                 st.dataframe(anomali[["tanggal", "penjualan"]])
 
-            # ========== INSIGHT AI ==========
+            # ========== INSIGHT DARI AI ==========
             st.subheader("🤖 Insight dari AI Granite")
 
             ringkasan = "\n".join([
-                f"{row['tanggal'].strftime('%B %Y')}: {int(row['penjualan']):,}" for idx, row in df.iterrows()
+                f"{row['tanggal'].strftime('%B %Y')}: {int(row['penjualan']):,}" for _, row in df.iterrows()
             ])
 
             prompt = f"""
