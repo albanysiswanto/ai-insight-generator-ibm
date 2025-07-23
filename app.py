@@ -6,27 +6,26 @@ import replicate
 import os
 from dotenv import load_dotenv
 
-# ========== LOAD ENV ==========
+# ===== Load API Token dari .env =====
 load_dotenv()
-REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
-replicate_client = replicate.Client(api_token=REPLICATE_API_TOKEN)
+os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
 
-# ========== CONFIG ==========
+# ===== Streamlit Config =====
 st.set_page_config(page_title="AI Insight Generator", layout="wide")
 st.title("📊 AI Insight Generator for Excel Data")
 
-# ========== FUNGSI UTAMA ==========
+# ===== Fungsi untuk Generate Insight dari Granite =====
 def generate_insight_with_granite(prompt):
     try:
-        output = replicate_client.run(
+        output = replicate.run(
             "ibm-granite/granite-3.3-8b-instruct",
-            input={"prompt": prompt, "max_new_tokens": 300, "temperature": 0.7}
+            input={"prompt": prompt, "max_new_tokens": 200, "temperature": 0.7}
         )
         return "".join(output)
     except Exception as e:
         return f"❌ Error saat memanggil Granite: {e}"
 
-# ========== UPLOAD FILE ==========
+# ===== Upload Excel File =====
 uploaded_file = st.file_uploader("Upload Excel file (.xlsx) dengan kolom 'tanggal' dan 'penjualan'", type=["xlsx"])
 
 if uploaded_file:
@@ -42,7 +41,7 @@ if uploaded_file:
             df['tanggal'] = pd.to_datetime(df['tanggal'])
             df = df.sort_values("tanggal")
 
-            # ========== GRAFIK ==========
+            # ===== Grafik Penjualan =====
             st.subheader("📈 Grafik Penjualan")
             fig, ax = plt.subplots()
             ax.plot(df["tanggal"], df["penjualan"], marker="o", linestyle="-")
@@ -51,9 +50,8 @@ if uploaded_file:
             ax.set_title("Tren Penjualan")
             st.pyplot(fig)
 
-            # ========== INSIGHT ANGKA ==========
+            # ===== Insight Numerik =====
             st.subheader("📊 Insight Angka Otomatis")
-
             perubahan = df["penjualan"].pct_change().fillna(0)
             rata2 = perubahan.mean() * 100
             naik = df[df["penjualan"].diff() > 0]
@@ -71,12 +69,14 @@ if uploaded_file:
                 st.markdown("🚨 **Detail Anomali Terdeteksi:**")
                 st.dataframe(anomali[["tanggal", "penjualan"]])
 
-            # ========== INSIGHT DARI AI ==========
+            # ===== Insight dari AI Granite =====
             st.subheader("🤖 Insight dari AI Granite")
 
             ringkasan = "\n".join([
-                f"{row['tanggal'].strftime('%B %Y')}: {int(row['penjualan']):,}" for _, row in df.iterrows()
+                f"{row['tanggal'].strftime('%B %Y')}: {int(row['penjualan']):,}" 
+                for idx, row in df.tail(12).iterrows()
             ])
+
 
             prompt = f"""
 Berdasarkan data penjualan berikut:
@@ -86,7 +86,7 @@ Berdasarkan data penjualan berikut:
 Buatlah ringkasan tren penjualan dan rekomendasi strategi bisnis dalam bentuk paragraf singkat.
 """
 
-            with st.spinner("🔍 AI sedang menganalisis..."):
+            with st.spinner("⏳ AI sedang menganalisis (estimasi 30-60 detik)..."):
                 granite_result = generate_insight_with_granite(prompt)
 
             st.success("✅ Insight berhasil dibuat:")

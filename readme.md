@@ -1,5 +1,10 @@
 # 📊 AI Insight Generator for Excel Data
 
+![Preview](assets/image1.png)
+![Preview](assets/image2.png)
+
+[Link Preview](https://albanysiswanto-ai-insight-generator-ibm-app-oe58mg.streamlit.app)
+
 A simple web-based tool that analyzes Excel data (sales, finance, etc.) and generates insights using IBM Granite AI via Replicate.com.
 
 Alat berbasis web untuk menganalisis data Excel (seperti penjualan atau laporan keuangan) dan menghasilkan insight otomatis menggunakan IBM Granite AI melalui Replicate.com.
