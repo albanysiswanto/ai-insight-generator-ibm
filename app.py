@@ -3,21 +3,28 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import replicate
-import os
 from dotenv import load_dotenv
+import os
 
-# ===== Load API Token dari .env =====
-load_dotenv()
-os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
+# ======== ENVIRONMENT CONFIG ==========
+load_dotenv()  # for local development
 
-# ===== Streamlit Config =====
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN") or st.secrets.get("REPLICATE_API_TOKEN")
+
+if not REPLICATE_API_TOKEN:
+    st.error("❌ Replicate API token tidak ditemukan. Tambahkan ke file `.env` atau `st.secrets`.")
+    st.stop()
+
+client = replicate.Client(api_token=REPLICATE_API_TOKEN)
+
+# ========== STREAMLIT CONFIG ==========
 st.set_page_config(page_title="AI Insight Generator", layout="wide")
 st.title("📊 AI Insight Generator for Excel Data")
 
-# ===== Fungsi untuk Generate Insight dari Granite =====
+# ========== AI INSIGHT FUNCTION ==========
 def generate_insight_with_granite(prompt):
     try:
-        output = replicate.run(
+        output = client.run(
             "ibm-granite/granite-3.3-8b-instruct",
             input={"prompt": prompt, "max_new_tokens": 200, "temperature": 0.7}
         )
@@ -25,7 +32,7 @@ def generate_insight_with_granite(prompt):
     except Exception as e:
         return f"❌ Error saat memanggil Granite: {e}"
 
-# ===== Upload Excel File =====
+# ========== FILE UPLOAD ==========
 uploaded_file = st.file_uploader("Upload Excel file (.xlsx) dengan kolom 'tanggal' dan 'penjualan'", type=["xlsx"])
 
 if uploaded_file:
@@ -34,14 +41,13 @@ if uploaded_file:
         st.subheader("📄 Data Preview")
         st.dataframe(df.head())
 
-        # Validasi kolom
         if "tanggal" not in df.columns or "penjualan" not in df.columns:
             st.error("❌ File harus memiliki kolom: `tanggal` dan `penjualan`")
         else:
             df['tanggal'] = pd.to_datetime(df['tanggal'])
             df = df.sort_values("tanggal")
 
-            # ===== Grafik Penjualan =====
+            # ========== GRAFIK ==========
             st.subheader("📈 Grafik Penjualan")
             fig, ax = plt.subplots()
             ax.plot(df["tanggal"], df["penjualan"], marker="o", linestyle="-")
@@ -50,7 +56,7 @@ if uploaded_file:
             ax.set_title("Tren Penjualan")
             st.pyplot(fig)
 
-            # ===== Insight Numerik =====
+            # ========== INSIGHT NUMERIK ==========
             st.subheader("📊 Insight Angka Otomatis")
             perubahan = df["penjualan"].pct_change().fillna(0)
             rata2 = perubahan.mean() * 100
@@ -69,14 +75,12 @@ if uploaded_file:
                 st.markdown("🚨 **Detail Anomali Terdeteksi:**")
                 st.dataframe(anomali[["tanggal", "penjualan"]])
 
-            # ===== Insight dari AI Granite =====
+            # ========== INSIGHT AI ==========
             st.subheader("🤖 Insight dari AI Granite")
 
             ringkasan = "\n".join([
-                f"{row['tanggal'].strftime('%B %Y')}: {int(row['penjualan']):,}" 
-                for idx, row in df.tail(12).iterrows()
+                f"{row['tanggal'].strftime('%B %Y')}: {int(row['penjualan']):,}" for idx, row in df.tail(12).iterrows()
             ])
-
 
             prompt = f"""
 Berdasarkan data penjualan berikut:
