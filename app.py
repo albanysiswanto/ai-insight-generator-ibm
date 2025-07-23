@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
+os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
 
 # ========== CONFIG ==========
 st.set_page_config(page_title="AI Insight Generator", layout="wide")
